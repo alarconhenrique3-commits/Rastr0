@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Rastro</title>
+<meta name="theme-color" content="#0A8567">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rastro">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: app de celular, coluna única de 560px, abas fixas embaixo. Três módulos, três cores: treino (azul), refeição (laranja), corrida (verde). */
+:root {
+  --bg: #EDF0EC;
+  --surface: #F9FBF8;
+  --fg: #111A16;
+  --muted: #586861;
+  --line: #D2D9D2;
+  --treino: #2E49F2;
+  --refeicao: #B5530A;
+  --corrida: #0A8567;
+  --on-accent: #FFFFFF;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1411; --surface: #151F1A; --fg: #E7EEE9; --muted: #8FA196; --line: #25322B;
+    --treino: #8296FF; --refeicao: #F2A055; --corrida: #43D4AB; --on-accent: #0D1411;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1411; --surface: #151F1A; --fg: #E7EEE9; --muted: #8FA196; --line: #25322B;
+  --treino: #8296FF; --refeicao: #F2A055; --corrida: #43D4AB; --on-accent: #0D1411;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 16px/1.45 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 104px;
+}
+.wrap { max-width: 560px; margin: 0 auto; }
+.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { font: 900 22px/1 var(--font-display); font-stretch: 125%; letter-spacing: .04em; text-transform: uppercase; }
+.date { color: var(--muted); font-size: 14px; }
+.date::first-letter { text-transform: uppercase; }
+
+h1 { font: 800 26px/1.1 var(--font-display); font-stretch: 125%; margin: 22px 0 14px; text-wrap: balance; }
+.sec { font: 700 12px/1 var(--font-display); font-stretch: 112%; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 26px 0 12px; }
+.view { --c: var(--fg); }
+.v-treino { --c: var(--treino); }
+.v-refeicao { --c: var(--refeicao); }
+.v-corrida { --c: var(--corrida); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); min-width: 0; }
+input[type="text"], textarea {
+  font: inherit; font-size: 16px; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 11px 12px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 84px; }
+input:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid var(--c, var(--fg)); outline-offset: 2px; }
+.hint { margin: 0; font-size: 14px; color: var(--muted); min-height: 1.4em; }
+.note { margin: 0; font-size: 13px; color: var(--muted); }
+
+.btn { appearance: none; border: 1px solid var(--c); background: var(--c); color: var(--on-accent); border-radius: 6px; padding: 14px 18px; width: 100%; font: 700 15px/1 var(--font-display); font-stretch: 112%; letter-spacing: .03em; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.btn.photo { background: var(--bg); color: var(--fg); border-color: var(--line); display: inline-block; text-align: center; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.chips legend { padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; }
+.chip span { display: inline-block; padding: 9px 14px; border: 1px solid var(--line); border-radius: 999px; font-weight: 600; font-size: 14px; background: var(--bg); }
+.chip input:checked + span { background: var(--c); border-color: var(--c); color: var(--on-accent); }
+.chip input:focus-visible + span { outline: 2px solid var(--fg); outline-offset: 2px; }
+.preview { max-width: 100%; border-radius: 8px; display: block; max-height: 220px; object-fit: cover; }
+
+/* resumo */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin-top: 18px; }
+.stat { padding: 14px 12px; border-left: 1px solid var(--line); }
+.stat:first-child { border-left: 0; }
+.stat .n { font: 800 36px/1 var(--font-display); font-stretch: 75%; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.stat.s-treino .n { color: var(--treino); }
+.stat.s-corrida .n { color: var(--corrida); }
+.stat.s-refeicao .n { color: var(--refeicao); }
+
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+.day { text-align: center; padding: 8px 0 9px; border-radius: 8px; font: 700 12px/1 var(--font-display); color: var(--muted); }
+.day.today { background: var(--fg); color: var(--bg); }
+.dots { display: flex; justify-content: center; gap: 3px; height: 7px; margin-top: 7px; }
+.d { width: 6px; height: 6px; border-radius: 50%; display: block; }
+.d-treino { background: var(--treino); }
+.d-refeicao { background: var(--refeicao); }
+.d-corrida { background: var(--corrida); }
+
+/* linha do tempo */
+.tl { list-style: none; margin: 0; padding: 0; }
+.row { display: grid; grid-template-columns: 46px 14px minmax(0, 1fr); column-gap: 10px; padding-bottom: 18px; }
+.row .tm { font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; padding-top: 1px; }
+.row .dot { position: relative; }
+.row .dot::after { content: ""; position: absolute; left: 1px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: var(--k); }
+.row .dot::before { content: ""; position: absolute; left: 6px; top: 20px; bottom: -18px; width: 2px; background: var(--line); }
+.row:last-child .dot::before { display: none; }
+.r-treino { --k: var(--treino); }
+.r-refeicao { --k: var(--refeicao); }
+.r-corrida { --k: var(--corrida); }
+.kind { font: 700 12px/1 var(--font-display); font-stretch: 112%; letter-spacing: .1em; text-transform: uppercase; color: var(--k); display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.tag { font: 600 11px/1 var(--font-body); letter-spacing: 0; text-transform: none; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 3px 5px; }
+.ttl { font-weight: 700; overflow-wrap: anywhere; }
+.meta { color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.thumb { display: block; width: 120px; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; margin-top: 8px; }
+.rm { background: none; border: 0; padding: 8px 0 0; color: var(--muted); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.empty p { margin: 0; }
+.banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; color: var(--muted); }
+.banner button { background: none; border: 0; color: var(--fg); font: 700 13px var(--font-body); text-decoration: underline; cursor: pointer; padding: 6px 0; }
+
+.hist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.hist li { display: flex; gap: 10px; font-size: 14px; }
+.hist time { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+
+/* mapa */
+.map { display: block; width: 100%; max-width: 100%; height: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+.map .grid { stroke: var(--line); stroke-width: .3; fill: none; }
+.map .trail { stroke: var(--corrida); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.map .p-start { fill: var(--bg); stroke: var(--fg); stroke-width: 1.2; }
+.map .p-end { fill: var(--corrida); stroke: var(--bg); stroke-width: .8; }
+.map .ph { fill: var(--muted); font-size: 4.2px; text-anchor: middle; }
+.rs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 14px 0 6px; }
+.rs .n { font: 800 34px/1 var(--font-display); font-stretch: 75%; font-variant-numeric: tabular-nums; }
+.rs .l { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.status { margin: 0 0 14px; font-size: 14px; color: var(--muted); min-height: 1.4em; }
+.actions { display: grid; gap: 10px; }
+.run { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; }
+.runs { display: grid; gap: 12px; }
+.run .head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.run .big { font: 800 28px/1 var(--font-display); font-stretch: 75%; font-variant-numeric: tabular-nums; color: var(--corrida); }
+
+/* abas */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line);
+  padding: 6px max(16px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.tabs { max-width: 560px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 52px; background: none; border: 0; border-radius: 8px; color: var(--muted); font: 600 11px/1 var(--font-body); cursor: pointer; }
+.tab[aria-current="page"] { color: var(--c); box-shadow: inset 0 2px 0 var(--c); }
+.t-hoje { --c: var(--fg); }
+.t-treino { --c: var(--treino); }
+.t-refeicao { --c: var(--refeicao); }
+.t-corrida { --c: var(--corrida); }
+
+.toast { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); max-width: calc(100% - 32px); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 6; }
+.toast.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+html { padding-top: env(safe-area-inset-top, 0px); }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Rastro</div>
+    <div class="date" id="today-label"></div>
+  </header>
+  <main id="app"></main>
+</div>
+<nav class="tabbar" aria-label="Seções do app"><div class="tabs" id="tabs"></div></nav>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  const KEY = 'rastro:v1';
+  const DAY = 86400000;
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const KIND = { treino: 'Treino', refeicao: 'Refeição', corrida: 'Corrida' };
+  const MEALS = ['Café da manhã', 'Almoço', 'Lanche', 'Jantar', 'Ceia'];
+  let state = { entries: [] };
+  let tab = 'hoje';
+  let rec = null;
+
+  const $app = document.getElementById('app');
+  const $tabs = document.getElementById('tabs');
+  const $toast = document.getElementById('toast');
+
+  /* ---------- utilidades ---------- */
+  function h(tag, props, ...kids) {
+    const el = document.createElement(tag);
+    if (props) {
+      for (const k of Object.keys(props)) {
+        const v = props[k];
+        if (v == null || v === false) continue;
+        if (k === 'class') el.className = v;
+        else if (k === 'text') el.textContent = v;
+        else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : String(v));
+      }
+    }
+    for (const c of kids.flat(Infinity)) {
+      if (c == null || c === false) continue;
+      el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+    }
+    return el;
+  }
+  function s(tag, props) {
+    const el = document.createElementNS(SVGNS, tag);
+    for (const k in props) el.setAttribute(k, String(props[k]));
+    return el;
+  }
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const nf = (n, d) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const fmtKm = (k) => nf(k, 2);
+  const fmtKg = (k) => nf(k, Number.isInteger(k) ? 0 : 1);
+  function fmtDur(sec) {
+    sec = Math.round(sec);
+    const hh = Math.floor(sec / 3600), mm = Math.floor((sec % 3600) / 60), ss = sec % 60;
+    const p = (n) => String(n).padStart(2, '0');
+    return hh ? hh + ':' + p(mm) + ':' + p(ss) : p(mm) + ':' + p(ss);
+  }
+  function fmtPace(spk) {
+    if (!isFinite(spk) || spk <= 0) return '--:--';
+    let m = Math.floor(spk / 60), sc = Math.round(spk % 60);
+    if (sc === 60) { m += 1; sc = 0; }
+    return m + ':' + String(sc).padStart(2, '0');
+  }
+  const fmtTime = (ts) => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const fmtShort = (ts) => new Date(ts).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const startOfDay = (ts) => { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); };
+
+  let toastTimer;
+  function toast(msg) {
+    $toast.textContent = msg;
+    $toast.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $toast.classList.remove('on'), 2400);
+  }
+
+  /* ---------- dados ---------- */
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.entries)) { state = parsed; return true; }
+      }
+    } catch (e) { /* sem armazenamento */ }
+    return false;
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { toast('Não foi possível salvar neste navegador.'); }
+  }
+  function rng(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function genRoute(seedN, n) {
+    const r = rng(seedN);
+    const ph = r() * 6.28, a1 = r() * 6 + 4, a2 = r() * 3 + 2, k = 2 + Math.floor(r() * 2), sx = 0.85 + r() * 0.25;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const t = (i / (n - 1)) * Math.PI * 2;
+      const x = 50 + 34 * sx * Math.cos(t) + a1 * 0.6 * Math.sin(k * t + ph);
+      const y = 30 + 19 * Math.sin(t) + a2 * Math.cos((k + 1) * t + ph);
+      pts.push([clamp(x, 6, 94), clamp(y, 6, 54)]);
+    }
+    return pts;
+  }
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  function routeLen(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += dist(pts[i - 1], pts[i]); return L; }
+  const pathD = (pts) => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+
+  function seed() {
+    const at = (ago, hh, mm) => { const d = new Date(); d.setHours(hh, mm, 0, 0); return d.getTime() - ago * DAY; };
+    const run = (ago, hh, mm, km, sec, sd) => ({ type: 'corrida', ts: at(ago, hh, mm), km, sec, route: genRoute(sd, 60).map((p) => [+p[0].toFixed(1), +p[1].toFixed(1)]) });
+    const list = [
+      { type: 'treino', ts: at(6, 18, 5), name: 'Agachamento livre', sets: 4, reps: 10, kg: 60 },
+      { type: 'treino', ts: at(6, 18, 25), name: 'Levantamento terra', sets: 3, reps: 8, kg: 70 },
+      { type: 'treino', ts: at(3, 7, 0), name: 'Supino reto', sets: 4, reps: 10, kg: 40 },
+      { type: 'treino', ts: at(3, 7, 20), name: 'Remada curvada', sets: 4, reps: 10, kg: 35 },
+      { type: 'treino', ts: at(3, 7, 40), name: 'Desenvolvimento com halteres', sets: 3, reps: 12, kg: 14 },
+      { type: 'treino', ts: at(0, 18, 0), name: 'Supino reto', sets: 4, reps: 10, kg: 42.5 },
+      { type: 'treino', ts: at(0, 18, 20), name: 'Remada curvada', sets: 4, reps: 10, kg: 37.5 },
+      { type: 'refeicao', ts: at(1, 20, 15), meal: 'Jantar', text: 'Omelete de queijo e salada de folhas' },
+      { type: 'refeicao', ts: at(0, 8, 5), meal: 'Café da manhã', text: 'Pão integral com ovos mexidos e café com leite' },
+      { type: 'refeicao', ts: at(0, 12, 40), meal: 'Almoço', text: 'Arroz, feijão, frango grelhado e salada de tomate' },
+      run(0, 6, 10, 5.2, 1770, 11),
+      run(2, 6, 0, 7.1, 2480, 12),
+      run(4, 17, 45, 3.8, 1360, 13)
+    ];
+    state.entries = list.map((e) => Object.assign({ id: uid(), ex: true }, e));
+  }
+
+  /* ---------- componentes ---------- */
+  function icon(paths) {
+    const svg = s('svg', { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' });
+    svg.innerHTML = paths;
+    return svg;
+  }
+  const TABS = [
+    { id: 'hoje', label: 'Hoje', icon: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>' },
+    { id: 'treino', label: 'Treino', icon: '<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>' },
+    { id: 'refeicao', label: 'Refeições', icon: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/>' },
+    { id: 'corrida', label: 'Corrida', icon: '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h6a3 3 0 0 0 0-6h-4a3 3 0 0 1 0-6h6"/>' }
+  ];
+  function buildTabs() {
+    TABS.forEach((t) => {
+      $tabs.append(h('button', { type: 'button', class: 'tab t-' + t.id, 'data-tab': t.id, onclick: () => go(t.id) }, icon(t.icon), h('span', { text: t.label })));
+    });
+  }
+  function go(id) { tab = id; render(); window.scrollTo(0, 0); }
+
+  function field(label, input) { return h('label', { class: 'f' }, h('span', { text: label }), input); }
+
+  function makeMap(pts) {
+    const svg = s('svg', { viewBox: '0 0 100 60', class: 'map', role: 'img', 'aria-label': 'Mapa do trajeto da corrida' });
+    let g = '';
+    for (let x = 10; x < 100; x += 10) g += 'M' + x + ' 0V60';
+    for (let y = 10; y < 60; y += 10) g += 'M0 ' + y + 'H100';
+    const grid = s('path', { class: 'grid', d: g });
+    const trail = s('path', { class: 'trail', d: '' });
+    const a = s('circle', { class: 'p-start', r: 1.9 });
+    const b = s('circle', { class: 'p-end', r: 2.1 });
+    const ph = s('text', { class: 'ph', x: 50, y: 31 });
+    ph.textContent = 'Pronto para começar';
+    svg.append(grid, trail, a, b, ph);
+    function update(p, label) {
+      const ok = p && p.length > 1;
+      trail.setAttribute('d', ok ? pathD(p) : '');
+      a.style.display = ok ? '' : 'none';
+      b.style.display = ok ? '' : 'none';
+      ph.style.display = ok ? 'none' : '';
+      if (label) ph.textContent = label;
+      if (ok) {
+        a.setAttribute('cx', p[0][0]); a.setAttribute('cy', p[0][1]);
+        const l = p[p.length - 1];
+        b.setAttribute('cx', l[0]); b.setAttribute('cy', l[1]);
+      }
+    }
+    update(pts);
+    return { svg, update };
+  }
+
+  function entryRow(e) {
+    let title, meta, extra, kind = KIND[e.type];
+    if (e.type === 'treino') {
+      title = e.name; meta = e.sets + ' × ' + e.reps + ' · ' + fmtKg(e.kg) + ' kg';
+    } else if (e.type === 'refeicao') {
+      kind = e.meal; title = e.text;
+      if (e.img) extra = h('img', { class: 'thumb', src: e.img, alt: 'Foto da refeição' });
+    } else {
+      title = fmtKm(e.km) + ' km';
+      meta = fmtDur(e.sec) + ' · ritmo ' + fmtPace(e.sec / e.km) + '/km';
+      extra = h('div', { style: 'margin-top:8px;max-width:260px' }, makeMap(e.route).svg);
+    }
+    return h('li', { class: 'row r-' + e.type },
+      h('time', { class: 'tm', text: fmtTime(e.ts) }),
+      h('span', { class: 'dot', 'aria-hidden': 'true' }),
+      h('div', null,
+        h('div', { class: 'kind' }, h('span', { text: kind }), e.ex ? h('span', { class: 'tag', text: 'exemplo' }) : null),
+        h('div', { class: 'ttl', text: title }),
+        meta ? h('div', { class: 'meta', text: meta }) : null,
+        extra,
+        h('button', { class: 'rm', type: 'button', onclick: () => removeEntry(e.id) }, 'Remover')));
+  }
+  function removeEntry(id) {
+    state.entries = state.entries.filter((e) => e.id !== id);
+    save(); render(); toast('Registro removido.');
+  }
+  const todayEntries = (type) => {
+    const t0 = startOfDay(Date.now());
+    return state.entries.filter((e) => e.ts >= t0 && e.ts < t0 + DAY && (!type || e.type === type)).sort((a, b) => a.ts - b.ts);
+  };
+
+  /* ---------- views ---------- */
+  function viewHoje() {
+    const today = startOfDay(Date.now());
+    const week = [];
+    for (let i = 6; i >= 0; i--) week.push(today - i * DAY);
+    const inWeek = state.entries.filter((e) => e.ts >= week[0] && e.ts < today + DAY);
+    const treinoDays = new Set(inWeek.filter((e) => e.type === 'treino').map((e) => startOfDay(e.ts))).size;
+    const km = inWeek.filter((e) => e.type === 'corrida').reduce((a, e) => a + e.km, 0);
+    const meals = todayEntries('refeicao').length;
+
+    const root = h('section', { class: 'view v-hoje' });
+    if (state.entries.some((e) => e.ex)) {
+      root.append(h('div', { class: 'banner' }, h('span', { text: 'Os registros marcados como exemplo são fictícios.' }),
+        h('button', { type: 'button', onclick: () => { state.entries = state.entries.filter((e) => !e.ex); save(); render(); toast('Exemplos removidos.'); } }, 'Limpar exemplos')));
+    }
+    root.append(h('div', { class: 'stats' },
+      h('div', { class: 'stat s-treino' }, h('div', { class: 'n', text: String(treinoDays) }), h('div', { class: 'l', text: treinoDays === 1 ? 'dia de treino na semana' : 'dias de treino na semana' })),
+      h('div', { class: 'stat s-corrida' }, h('div', { class: 'n', text: nf(km, 1) }), h('div', { class: 'l', text: 'km corridos na semana' })),
+      h('div', { class: 'stat s-refeicao' }, h('div', { class: 'n', text: String(meals) }), h('div', { class: 'l', text: meals === 1 ? 'refeição hoje' : 'refeições hoje' }))));
+
+    root.append(h('div', { class: 'week' }, week.map((d) => {
+      const es = state.entries.filter((e) => e.ts >= d && e.ts < d + DAY);
+      const types = ['treino', 'refeicao', 'corrida'].filter((t) => es.some((e) => e.type === t));
+      const full = new Date(d).toLocaleDateString('pt-BR', { weekday: 'long' });
+      const lab = new Date(d).toLocaleDateString('pt-BR', { weekday: 'narrow' }).toUpperCase();
+      return h('div', { class: 'day' + (d === today ? ' today' : ''), role: 'img', 'aria-label': full + (types.length ? ': ' + types.map((t) => KIND[t].toLowerCase()).join(', ') : ': sem registros') },
+        h('span', { text: lab }), h('span', { class: 'dots' }, types.map((t) => h('i', { class: 'd d-' + t }))));
+    })));
+
+    root.append(h('h2', { class: 'sec', text: 'Seu dia' }));
+    const list = todayEntries();
+    if (!list.length) {
+      root.append(h('div', { class: 'empty' },
+        h('p', { text: 'Nada registrado hoje. Comece por um treino, uma refeição ou uma corrida.' }),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => go('treino') }, 'Registrar treino'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => go('refeicao') }, 'Registrar refeição'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => go('corrida') }, 'Gravar corrida')));
+    } else {
+      root.append(h('ul', { class: 'tl' }, list.map(entryRow)));
+    }
+    return root;
+  }
+
+  function lastTreino(name) {
+    const n = name.trim().toLowerCase();
+    if (!n) return null;
+    const m = state.entries.filter((e) => e.type === 'treino' && e.name.toLowerCase() === n);
+    return m.length ? m.reduce((a, b) => (b.ts > a.ts ? b : a)) : null;
+  }
+
+  function viewTreino() {
+    const root = h('section', { class: 'view v-treino' });
+    root.append(h('h1', { text: 'Treino de hoje' }));
+    const names = [...new Set(state.entries.filter((e) => e.type === 'treino').map((e) => e.name))];
+    const name = h('input', { id: 'ex-name', type: 'text', list: 'exlist', placeholder: 'Ex.: Supino reto', autocomplete: 'off' });
+    const sets = h('input', { id: 'ex-sets', type: 'text', inputmode: 'numeric', placeholder: '4' });
+    const reps = h('input', { id: 'ex-reps', type: 'text', inputmode: 'numeric', placeholder: '10' });
+    const kg = h('input', { id: 'ex-kg', type: 'text', inputmode: 'decimal', placeholder: '40' });
+    const hint = h('p', { class: 'hint', 'aria-live': 'polite' });
+    [sets, reps, kg].forEach((i) => i.addEventListener('input', () => { delete i.dataset.auto; }));
+
+    function updateHint() {
+      const last = lastTreino(name.value);
+      if (!last) { hint.textContent = name.value.trim() ? 'Primeira vez com este exercício. Registre a carga de hoje.' : ''; return; }
+      const up = last.reps >= 10;
+      const sug = up ? last.kg + 2.5 : last.kg;
+      hint.textContent = 'Última vez (' + fmtShort(last.ts) + '): ' + last.sets + ' × ' + last.reps + ' com ' + fmtKg(last.kg) + ' kg. ' +
+        (up ? 'Sugestão: ' + fmtKg(sug) + ' kg.' : 'Sugestão: mantenha ' + fmtKg(sug) + ' kg e tente uma repetição a mais.');
+      const fill = (inp, v) => { if (!inp.value || inp.dataset.auto) { inp.value = String(v).replace('.', ','); inp.dataset.auto = '1'; } };
+      fill(sets, last.sets); fill(reps, last.reps); fill(kg, sug);
+    }
+    name.addEventListener('input', updateHint);
+    name.addEventListener('change', updateHint);
+
+    function onAdd(ev) {
+      ev.preventDefault();
+      const nm = name.value.trim();
+      const se = parseInt(sets.value, 10), re = parseInt(reps.value, 10), kk = parseFloat(String(kg.value).replace(',', '.'));
+      if (!nm || !(se > 0) || !(re > 0) || !(kk >= 0)) { toast('Preencha exercício, séries, repetições e carga (0 para peso do corpo).'); return; }
+      state.entries.push({ id: uid(), type: 'treino', ts: Date.now(), name: nm, sets: se, reps: re, kg: kk });
+      save(); render(); toast('Exercício adicionado.');
+    }
+    root.append(h('form', { class: 'card', onsubmit: onAdd, novalidate: true },
+      h('datalist', { id: 'exlist' }, names.map((n) => h('option', { value: n }))),
+      field('Exercício', name),
+      h('div', { class: 'grid3' }, field('Séries', sets), field('Repetições', reps), field('Carga (kg)', kg)),
+      hint,
+      h('button', { class: 'btn', type: 'submit' }, 'Adicionar ao treino')));
+
+    const list = todayEntries('treino');
+    root.append(h('h2', { class: 'sec', text: 'Feito hoje' }));
+    if (list.length) {
+      const vol = list.reduce((a, e) => a + e.sets * e.reps * e.kg, 0);
+      root.append(h('ul', { class: 'tl' }, list.map(entryRow)));
+      if (vol > 0) root.append(h('p', { class: 'note', text: 'Volume de hoje: ' + nf(vol, 0) + ' kg (séries × repetições × carga).' }));
+    } else {
+      root.append(h('p', { class: 'note', text: 'Nenhum exercício registrado hoje.' }));
+    }
+    const t0 = startOfDay(Date.now());
+    const older = state.entries.filter((e) => e.type === 'treino' && e.ts < t0).sort((a, b) => b.ts - a.ts).slice(0, 6);
+    if (older.length) {
+      root.append(h('h2', { class: 'sec', text: 'Treinos anteriores' }));
+      root.append(h('ul', { class: 'hist' }, older.map((e) => h('li', null, h('time', { text: fmtShort(e.ts) }), h('span', { text: e.name + ' · ' + e.sets + ' × ' + e.reps + ' · ' + fmtKg(e.kg) + ' kg' })))));
+    }
+    return root;
+  }
+
+  function shrink(file) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onerror = rej;
+      fr.onload = () => {
+        const im = new Image();
+        im.onerror = rej;
+        im.onload = () => {
+          const sc = Math.min(1, 480 / Math.max(im.width, im.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc);
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          res(c.toDataURL('image/jpeg', 0.72));
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+
+  function viewRefeicao() {
+    const root = h('section', { class: 'view v-refeicao' });
+    root.append(h('h1', { text: 'Refeições' }));
+    const hr = new Date().getHours();
+    const def = hr < 10 ? 0 : hr < 15 ? 1 : hr < 18 ? 2 : hr < 22 ? 3 : 4;
+    const chips = h('fieldset', { class: 'chips' }, h('legend', { text: 'Qual refeição?' }),
+      MEALS.map((m, i) => h('label', { class: 'chip' }, h('input', { type: 'radio', name: 'meal', value: m, checked: i === def }), h('span', { text: m }))));
+    const text = h('textarea', { id: 'meal-text', placeholder: 'Ex.: arroz, feijão, frango grelhado e salada' });
+    const file = h('input', { id: 'meal-photo', class: 'sr', type: 'file', accept: 'image/*' });
+    const prev = h('div');
+    let img = null;
+    file.addEventListener('change', async () => {
+      const f = file.files && file.files[0];
+      if (!f) return;
+      try {
+        img = await shrink(f);
+        prev.replaceChildren(h('img', { class: 'preview', src: img, alt: 'Prévia da foto da refeição' }));
+      } catch (e) { img = null; toast('Não foi possível ler essa foto.'); }
+    });
+    function onAdd(ev) {
+      ev.preventDefault();
+      const tx = text.value.trim();
+      const sel = root.querySelector('input[name="meal"]:checked');
+      if (!tx && !img) { toast('Descreva a refeição ou adicione uma foto.'); return; }
+      const entry = { id: uid(), type: 'refeicao', ts: Date.now(), meal: sel ? sel.value : MEALS[def], text: tx || 'Refeição registrada por foto' };
+      if (img) entry.img = img;
+      state.entries.push(entry);
+      save(); render(); toast('Refeição registrada.');
+    }
+    root.append(h('form', { class: 'card', onsubmit: onAdd, novalidate: true },
+      chips, field('O que você comeu?', text),
+      h('div', null, file, h('label', { class: 'btn photo', for: 'meal-photo' }, 'Adicionar foto'), prev),
+      h('button', { class: 'btn', type: 'submit' }, 'Registrar refeição')));
+    root.append(h('p', { class: 'note', style: 'margin-top:10px', text: 'Esta versão guarda o que você comeu, sem contar calorias.' }));
+    const list = todayEntries('refeicao');
+    root.append(h('h2', { class: 'sec', text: 'Hoje' }));
+    root.append(list.length ? h('ul', { class: 'tl' }, list.map(entryRow)) : h('p', { class: 'note', text: 'Nenhuma refeição registrada hoje.' }));
+    return root;
+  }
+
+  /* ---------- corrida: GPS real, com simulação opcional ---------- */
+  const MAX_ACC = 35;    // descarta pontos com precisão pior que 35 m
+  const MIN_STEP = 2.5;  // ignora movimentos menores que 2,5 m (ruído do GPS)
+  const MAX_SPEED = 12;  // descarta saltos acima de 12 m/s (43 km/h)
+  let watchId = null;
+  let wake = null;
+
+  function haversine(a, b) {
+    const R = 6371000, rad = Math.PI / 180;
+    const dLat = (b[0] - a[0]) * rad, dLon = (b[1] - a[1]) * rad;
+    const x = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(x));
+  }
+  function projectPts(pts) {
+    const W = 100, H = 60, pad = 8;
+    const lat0 = pts.reduce((a, p) => a + p[0], 0) / pts.length;
+    const lon0 = pts.reduce((a, p) => a + p[1], 0) / pts.length;
+    const kx = Math.cos(lat0 * Math.PI / 180) * 111320, ky = 110540;
+    const xy = pts.map((p) => [(p[1] - lon0) * kx, -(p[0] - lat0) * ky]);
+    const xs = xy.map((p) => p[0]), ys = xy.map((p) => p[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+    const w = Math.max(maxX - minX, 30), hh = Math.max(maxY - minY, 30);
+    const sc = Math.min((W - 2 * pad) / w, (H - 2 * pad) / hh);
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    return xy.map((p) => [W / 2 + (p[0] - cx) * sc, H / 2 + (p[1] - cy) * sc]);
+  }
+  function thin(arr, max) {
+    if (arr.length <= max) return arr;
+    const out = [], step = (arr.length - 1) / (max - 1);
+    for (let i = 0; i < max; i++) out.push(arr[Math.round(i * step)]);
+    return out;
+  }
+  const recSec = () => (!rec ? 0 : rec.sim ? rec.simSec : (Date.now() - rec.t0) / 1000);
+
+  function requestWake() {
+    if (!('wakeLock' in navigator)) return;
+    navigator.wakeLock.request('screen').then((w) => { wake = w; }).catch(() => {});
+  }
+  function stopSensors() {
+    if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    if (rec && rec.timer) { clearInterval(rec.timer); rec.timer = null; }
+    if (wake) { try { wake.release(); } catch (e) { /* ignora */ } wake = null; }
+  }
+
+  function startRun(sim) {
+    if (!sim) {
+      if (!('geolocation' in navigator)) { toast('Este navegador não oferece GPS.'); return; }
+      if (!window.isSecureContext) { toast('O GPS só funciona em link https.'); return; }
+    }
+    rec = { sim: !!sim, pts: [], km: 0, t0: Date.now(), simSec: 0, skipped: 0, hidden: 0, done: false, refs: null, timer: null, msg: '' };
+    if (sim) {
+      startSim();
+    } else {
+      rec.msg = 'Procurando sinal de GPS…';
+      requestWake();
+      watchId = navigator.geolocation.watchPosition(onPos, onGpsErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 });
+      rec.timer = setInterval(paintRun, 1000);
+    }
+    render();
+  }
+  function onPos(p) {
+    if (!rec || rec.sim) return;
+    const c = p.coords;
+    if (c.accuracy > MAX_ACC) {
+      rec.skipped++;
+      rec.msg = 'Sinal fraco (precisão de ' + Math.round(c.accuracy) + ' m). Vá para um local aberto.';
+      paintRun(); return;
+    }
+    const pt = [c.latitude, c.longitude, p.timestamp];
+    const last = rec.pts[rec.pts.length - 1];
+    if (last) {
+      const d = haversine(last, pt), dt = (pt[2] - last[2]) / 1000;
+      if (d < MIN_STEP) { rec.skipped++; return; }
+      if (dt > 0 && d / dt > MAX_SPEED) { rec.skipped++; return; }
+      rec.km += d / 1000;
+    }
+    rec.pts.push(pt);
+    rec.msg = 'Gravando. Mantenha o app aberto e a tela ligada.';
+    paintRun();
+  }
+  function onGpsErr(err) {
+    if (!rec) return;
+    if (err.code === 1) {
+      stopSensors(); rec = null; render();
+      toast('Localização negada. Libere nas configurações do navegador e tente de novo.');
+    } else {
+      rec.msg = 'Sem sinal de GPS no momento. Vá para um local aberto.';
+      paintRun();
+    }
+  }
+
+  /* simulação: percurso falso, só para ver o app funcionando sem sair de casa */
+  function startSim() {
+    const lat0 = -1.4558, lon0 = -48.4902;
+    const kx = Math.cos(lat0 * Math.PI / 180) * 111320, ky = 110540;
+    rec.route = genRoute(Math.floor(Math.random() * 100000), 70).map((p) => [lat0 - (p[1] - 30) * 30 / ky, lon0 + (p[0] - 50) * 30 / kx]);
+    rec.i = 0; rec.pace = 335;
+    rec.msg = 'Gravando percurso simulado…';
+    rec.timer = setInterval(simTick, 350);
+  }
+  function simTick() {
+    if (!rec || !rec.sim) return;
+    if (rec.i >= rec.route.length) {
+      clearInterval(rec.timer); rec.timer = null; rec.done = true;
+      rec.msg = 'Percurso simulado concluído. Salve a corrida.';
+      paintRun(); return;
+    }
+    const p = rec.route[rec.i], last = rec.pts[rec.pts.length - 1];
+    if (last) {
+      const d = haversine(last, p);
+      rec.pace = clamp(rec.pace + (Math.random() - 0.5) * 8, 310, 375);
+      rec.km += d / 1000; rec.simSec += (d / 1000) * rec.pace;
+    }
+    rec.pts.push([p[0], p[1], rec.t0 + rec.simSec * 1000]);
+    rec.i += 1;
+    paintRun();
+  }
+
+  function paintRun() {
+    if (!rec || !rec.refs || !rec.refs.root.isConnected) return;
+    const r = rec.refs, sec = recSec();
+    r.map.update(rec.pts.length > 1 ? projectPts(rec.pts) : [], rec.sim ? 'Iniciando simulação' : 'Aguardando sinal de GPS');
+    r.km.textContent = fmtKm(rec.km);
+    r.time.textContent = fmtDur(sec);
+    r.pace.textContent = rec.km > 0.05 ? fmtPace(sec / rec.km) : '--:--';
+    r.status.textContent = rec.msg;
+  }
+  function saveRun() {
+    if (!rec) return;
+    if (rec.km < 0.1) { toast('Corra um pouco mais antes de salvar.'); return; }
+    const entry = {
+      id: uid(), type: 'corrida', ts: rec.t0, km: +rec.km.toFixed(2), sec: Math.round(recSec()),
+      route: thin(projectPts(rec.pts), 200).map((p) => [+p[0].toFixed(1), +p[1].toFixed(1)])
+    };
+    if (rec.sim) entry.ex = true;
+    else entry.raw = thin(rec.pts, 600).map((p) => [+p[0].toFixed(6), +p[1].toFixed(6), p[2]]);
+    if (rec.hidden) entry.hidden = rec.hidden;
+    stopSensors(); rec = null;
+    state.entries.push(entry);
+    save(); render(); toast('Corrida salva.');
+  }
+  function gpxOf(e) {
+    const pts = e.raw.map((p) => '<trkpt lat="' + p[0] + '" lon="' + p[1] + '"><time>' + new Date(p[2]).toISOString() + '</time></trkpt>').join('');
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Rastro" xmlns="http://www.topografix.com/GPX/1/1"><trk><name>Corrida ' +
+      new Date(e.ts).toLocaleDateString('pt-BR') + '</name><trkseg>' + pts + '</trkseg></trk></gpx>';
+  }
+  function downloadGpx(e) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([gpxOf(e)], { type: 'application/gpx+xml' }));
+    a.download = 'rastro-' + new Date(e.ts).toISOString().slice(0, 10) + '.gpx';
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!rec || rec.sim) return;
+    if (document.hidden) { rec.hidden += 1; }
+    else {
+      requestWake();
+      if (rec.hidden) rec.msg = 'O app saiu da tela ' + rec.hidden + (rec.hidden === 1 ? ' vez' : ' vezes') + '. O GPS pode ter parado nesse intervalo.';
+      paintRun();
+    }
+  });
+
+  function viewCorrida() {
+    const root = h('section', { class: 'view v-corrida' });
+    root.append(h('h1', { text: 'Corrida' }));
+    const map = makeMap([]);
+    map.update(rec && rec.pts.length > 1 ? projectPts(rec.pts) : [], rec ? (rec.sim ? 'Iniciando simulação' : 'Aguardando sinal de GPS') : 'Pronto para gravar');
+    const sec = recSec();
+    const kmEl = h('div', { class: 'n', text: rec ? fmtKm(rec.km) : '0,00' });
+    const timeEl = h('div', { class: 'n', text: rec ? fmtDur(sec) : '00:00' });
+    const paceEl = h('div', { class: 'n', text: rec && rec.km > 0.05 ? fmtPace(sec / rec.km) : '--:--' });
+    const status = h('p', { class: 'status', 'aria-live': 'polite', text: rec ? rec.msg : '' });
+    root.append(map.svg,
+      h('div', { class: 'rs' },
+        h('div', null, kmEl, h('div', { class: 'l', text: 'km' })),
+        h('div', null, timeEl, h('div', { class: 'l', text: 'tempo' })),
+        h('div', null, paceEl, h('div', { class: 'l', text: 'ritmo (min/km)' }))),
+      status);
+    if (rec) {
+      rec.refs = { root, map, km: kmEl, time: timeEl, pace: paceEl, status };
+      const cancel = h('button', { class: 'btn ghost', type: 'button' }, 'Cancelar');
+      let armed = false;
+      cancel.addEventListener('click', () => {
+        if (!armed) {
+          armed = true; cancel.textContent = 'Toque de novo para descartar';
+          setTimeout(() => { armed = false; cancel.textContent = 'Cancelar'; }, 3000);
+        } else { stopSensors(); rec = null; render(); }
+      });
+      root.append(h('div', { class: 'actions' }, h('button', { class: 'btn', type: 'button', onclick: saveRun }, 'Finalizar e salvar'), cancel));
+    } else {
+      root.append(h('div', { class: 'actions' },
+        h('button', { class: 'btn', type: 'button', onclick: () => startRun(false) }, 'Iniciar corrida'),
+        h('button', { class: 'btn ghost', type: 'button', onclick: () => startRun(true) }, 'Testar sem GPS (simulação)')));
+    }
+    root.append(h('p', { class: 'note', style: 'margin-top:12px', text: 'O GPS grava com o app aberto e a tela ligada. Bloquear a tela ou abrir outro app pode pausar a gravação.' }));
+
+    const runs = state.entries.filter((e) => e.type === 'corrida').sort((a, b) => b.ts - a.ts).slice(0, 8);
+    root.append(h('h2', { class: 'sec', text: 'Corridas salvas' }));
+    root.append(runs.length ? h('div', { class: 'runs' }, runs.map((e) => h('article', { class: 'run' },
+      h('div', { class: 'head' }, h('span', { class: 'big', text: fmtKm(e.km) + ' km' }), h('span', { class: 'meta', text: fmtShort(e.ts) + ' às ' + fmtTime(e.ts) })),
+      makeMap(e.route).svg,
+      h('div', { class: 'meta', text: fmtDur(e.sec) + ' · ritmo ' + fmtPace(e.sec / e.km) + '/km' + (e.ex ? ' · exemplo' : '') }),
+      h('div', { style: 'display:flex;gap:16px;flex-wrap:wrap' },
+        e.raw ? h('button', { class: 'rm', type: 'button', onclick: () => downloadGpx(e) }, 'Baixar GPX') : null,
+        h('button', { class: 'rm', type: 'button', onclick: () => removeEntry(e.id) }, 'Remover'))))) : h('p', { class: 'note', text: 'Nenhuma corrida salva ainda.' }));
+    return root;
+  }
+
+  /* ---------- início ---------- */
+  function render() {
+    $tabs.querySelectorAll('.tab').forEach((b) => b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'));
+    const tc = $tabs.querySelector('[data-tab="corrida"] span');
+    if (tc) tc.textContent = rec ? 'Gravando' : 'Corrida';
+    const views = { hoje: viewHoje, treino: viewTreino, refeicao: viewRefeicao, corrida: viewCorrida };
+    $app.replaceChildren(views[tab]());
+  }
+
+  document.getElementById('today-label').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (!load()) { seed(); save(); }
+  buildTabs();
+  render();
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+</script>
+</body>
+</html>
