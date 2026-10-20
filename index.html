@@ -288,27 +288,6 @@ html { padding-top: env(safe-area-inset-top, 0px); }
   function routeLen(pts) { let L = 0; for (let i = 1; i < pts.length; i++) L += dist(pts[i - 1], pts[i]); return L; }
   const pathD = (pts) => pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
 
-  function seed() {
-    const at = (ago, hh, mm) => { const d = new Date(); d.setHours(hh, mm, 0, 0); return d.getTime() - ago * DAY; };
-    const run = (ago, hh, mm, km, sec, sd) => ({ type: 'corrida', ts: at(ago, hh, mm), km, sec, route: genRoute(sd, 60).map((p) => [+p[0].toFixed(1), +p[1].toFixed(1)]) });
-    const list = [
-      { type: 'treino', ts: at(6, 18, 5), name: 'Agachamento livre', sets: 4, reps: 10, kg: 60 },
-      { type: 'treino', ts: at(6, 18, 25), name: 'Levantamento terra', sets: 3, reps: 8, kg: 70 },
-      { type: 'treino', ts: at(3, 7, 0), name: 'Supino reto', sets: 4, reps: 10, kg: 40 },
-      { type: 'treino', ts: at(3, 7, 20), name: 'Remada curvada', sets: 4, reps: 10, kg: 35 },
-      { type: 'treino', ts: at(3, 7, 40), name: 'Desenvolvimento com halteres', sets: 3, reps: 12, kg: 14 },
-      { type: 'treino', ts: at(0, 18, 0), name: 'Supino reto', sets: 4, reps: 10, kg: 42.5 },
-      { type: 'treino', ts: at(0, 18, 20), name: 'Remada curvada', sets: 4, reps: 10, kg: 37.5 },
-      { type: 'refeicao', ts: at(1, 20, 15), meal: 'Jantar', text: 'Omelete de queijo e salada de folhas' },
-      { type: 'refeicao', ts: at(0, 8, 5), meal: 'Café da manhã', text: 'Pão integral com ovos mexidos e café com leite' },
-      { type: 'refeicao', ts: at(0, 12, 40), meal: 'Almoço', text: 'Arroz, feijão, frango grelhado e salada de tomate' },
-      run(0, 6, 10, 5.2, 1770, 11),
-      run(2, 6, 0, 7.1, 2480, 12),
-      run(4, 17, 45, 3.8, 1360, 13)
-    ];
-    state.entries = list.map((e) => Object.assign({ id: uid(), ex: true }, e));
-  }
-
   /* ---------- componentes ---------- */
   function icon(paths) {
     const svg = s('svg', { viewBox: '0 0 24 24', width: 22, height: 22, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' });
@@ -776,7 +755,7 @@ html { padding-top: env(safe-area-inset-top, 0px); }
   }
 
   document.getElementById('today-label').textContent = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-  if (!load()) { seed(); save(); }
+  load();
   buildTabs();
   render();
 })();
